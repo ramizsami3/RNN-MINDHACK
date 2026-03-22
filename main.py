@@ -1,78 +1,89 @@
 import numpy as np
 import random
-from collections import Counter
 
 from RNN import RNN
 from data import train_data, test_data
 
-train_data = dict(list(train_data.items())[:500])
-test_data = dict(list(test_data.items())[:200])
 
 
-word_counts = Counter()
-
+#process text training data by placing unique words fromm each sentences key into a set
+wordset = set()
 for sentence in train_data.keys():
     for word in sentence.split():
-        word_counts[word] += 1
+        wordset.add(word)
 
-MAX_VOCAB = 10000
-
-vocab = [word for word, _ in word_counts.most_common(MAX_VOCAB)]
-vocab.append("<UNK>")
-
-word_to_index = {w: i for i, w in enumerate(vocab)}
+vocab = list(wordset)
 vocab_size = len(vocab)
+print(vocab)
+print(vocab_size)
 
+#map each word to an index
+word_to_index = {}
+index_to_word  = {}
 
+for i, w in enumerate(vocab):
+    word_to_index[w]  = i
 
+for i, w in enumerate(vocab):
+    index_to_word[i]  = w
+
+print(word_to_index)
+print(index_to_word)
+
+#transform word inputs into 1d vectors
 def CreateInputs(sentence):
-    inputs = []
-    for word in sentence.split()[:50]:
-        idx = word_to_index.get(word, word_to_index["<UNK>"])
-        inputs.append(idx)
+    inputs = [] 
+    for word in sentence.split(' '):
+        vector = np.zeros((vocab_size, 1))
+        vector[word_to_index[word]] = 1
+        inputs.append(vector)
     return inputs
 
-
+#Applies the Softmax Function to the input array to convert vectors into probaility distribtion
 def softmax(xs):
-    xs = xs - np.max(xs)
-    exp = np.exp(xs)
-    return exp / np.sum(exp)
+  return np.exp(xs) / sum(np.exp(xs))
 
-rnn = RNN(vocab_size, 2, hidden_size=64, lr=0.0005)
+#create an instance of our recurrent neural network
+rnn = RNN(vocab_size, 2)
 
-
+#process data
 def processData(data, backpropogation=True):
-    items = list(data.items())
-    random.shuffle(items)
+  
+  items = list(data.items())
+  random.shuffle(items)
 
-    loss = 0
-    num_correct = 0
+  loss = 0
+  num_correct = 0
 
-    for x, y in items:
-        inputs = CreateInputs(x)
-        target = int(y)
+  for x, y in items:
+    inputs = CreateInputs(x)
+    target = int(y)
 
-        output, _ = rnn.feedforward(inputs)
-        probabilties = softmax(output)
+    # Forward
+    output, _ = rnn.feedforward(inputs)
+    probabilties = softmax(output)
 
-        loss -= np.log(probabilties[target] + 1e-8)
-        num_correct += int(np.argmax(probabilties) == target)
+    # Calculate loss / accuracy
+    loss -= np.log(probabilties[target])
+    num_correct += int(np.argmax(probabilties) == target)
 
-        if backpropogation:
-            DL_DY = probabilties.copy()
-            DL_DY[target] -= 1
+    if backpropogation:
+      # Build dldy
+      DL_DY = probabilties
+      DL_DY[target] -= 1
 
-            rnn.backpropogation(DL_DY)
+      # Backward phase
+      rnn.backpropogation(DL_DY)
 
-    return loss / len(data), num_correct / len(data)
+  return loss / len(data), num_correct / len(data)
 
-
+#begin training loop
 for epoch in range(1050):
-    train_loss, train_acc = processData(train_data)
+  train_loss, train_acc = processData(train_data)
 
-    if epoch % 100 == 99:
-        print(f'--- Epoch {epoch + 1}')
-        print(f'Train:\tLoss {train_loss:.3f} | Accuracy: {train_acc:.3f}')
+  if epoch % 100 == 99:
+    print('--- Epoch %d' % (epoch + 1))
+    print('Train:\tLoss %.3f | Accuracy: %.3f' % (float(train_loss), float(train_acc)))
 
-        test_loss, test_acc = processData(test_data, backpropogation=False)
-        print(f'Test:\tLoss {test_loss:.3f} | Accuracy: {test_acc:.3f}')
+    test_loss, test_acc = processData(test_data, backpropogation =False)
+    print('Test:\tLoss %.3f | Accuracy: %.3f' % (float(test_loss), float(test_acc)))
