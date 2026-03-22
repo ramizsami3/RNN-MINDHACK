@@ -24,9 +24,7 @@ word_to_index = {w: i for i, w in enumerate(vocab)}
 vocab_size = len(vocab)
 
 
-# -------------------
-# INPUT PROCESSING
-# -------------------
+
 def CreateInputs(sentence):
     inputs = []
     for word in sentence.split()[:50]:
@@ -35,24 +33,14 @@ def CreateInputs(sentence):
     return inputs
 
 
-# -------------------
-# SOFTMAX
-# -------------------
 def softmax(xs):
     xs = xs - np.max(xs)
     exp = np.exp(xs)
     return exp / np.sum(exp)
 
-
-# -------------------
-# RNN
-# -------------------
 rnn = RNN(vocab_size, 2, hidden_size=64, lr=0.0005)
 
 
-# -------------------
-# TRAINING
-# -------------------
 def processData(data, backpropogation=True):
     items = list(data.items())
     random.shuffle(items)
@@ -79,9 +67,6 @@ def processData(data, backpropogation=True):
     return loss / len(data), num_correct / len(data)
 
 
-# -------------------
-# TRAIN LOOP
-# -------------------
 for epoch in range(1050):
     train_loss, train_acc = processData(train_data)
 
