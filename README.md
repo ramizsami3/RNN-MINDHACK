@@ -9,6 +9,7 @@ Link to the dataset used: https://www.kaggle.com/datasets/lakshmi25npathi/imdb-d
 
 
 Currently updating to account for greater variation in vocab and larger datasets. This current version is not functional ): a functional version may be found at this link: https://github.com/ramizsami3/RNN/tree/main
+The org files from this repo have also been added to this repo for convenience, identified by the (org) flag
 
 
 
